@@ -5,12 +5,10 @@ import com.qst.crop.common.StatusCode;
 import com.qst.crop.entity.User;
 import com.qst.crop.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.validator.constraints.ScriptAssert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
 import java.util.List;
 
@@ -25,19 +23,20 @@ public class UserController {
     public Result<String> register(@Valid @RequestBody User user, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             List<ObjectError> allErrors = bindingResult.getAllErrors();
-            StringBuffer stringBuffer = new StringBuffer();
+            StringBuilder stringBuilder = new StringBuilder();
             for (ObjectError error : allErrors) {
                 System.out.println(error);
-                stringBuffer.append(error.getDefaultMessage()).append("; ");
+                stringBuilder.append(error.getDefaultMessage()).append("; ");
             }
-            System.out.println(stringBuffer);
-            String errorInfo = stringBuffer.toString();
-            return new Result<String>(false, StatusCode.ERROR, "注册失败", errorInfo);
+            log.info("注册失败，原因：{}", stringBuilder);
+            String errorInfo = stringBuilder.toString();
+            return new Result<>(false, StatusCode.ERROR, "注册失败", errorInfo);
         }
         User uuser = userService.selectByUserName(user.getUserName());
         if (uuser != null) {
             return new Result<>(false, 400, "用户名已存在");
         }
+        userService.addUser(user);
         return new Result<>(true, 200, "注册成功");
     }
 }
